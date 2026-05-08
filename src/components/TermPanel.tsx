@@ -1,5 +1,6 @@
 import { AREA_COLOR, AREA_LABEL, LANG_LABEL } from "../lib/palette";
 import type { EmbeddingsPayload } from "../lib/types";
+import VectorStrip from "./VectorStrip";
 
 interface Props {
   payload: EmbeddingsPayload;
@@ -12,8 +13,9 @@ export default function TermPanel({ payload, idx, onSelect }: Props) {
   const neighbors = payload.neighbors[idx] ?? [];
   if (!term) return null;
 
-  // Use the strongest neighbor as the bar scale so bar widths read fairly.
-  const maxSim = neighbors.length > 0 ? Math.max(...neighbors.map((n) => n.sim), 0.001) : 1;
+  const maxSim = neighbors.length > 0
+    ? Math.max(...neighbors.map((n) => n.sim), 0.001)
+    : 1;
 
   return (
     <div className="section">
@@ -42,10 +44,21 @@ export default function TermPanel({ payload, idx, onSelect }: Props) {
         </div>
         <div className="short">{term.short}</div>
 
+        {term.vec && (
+          <div style={{ marginTop: 14 }}>
+            <h3 className="panel-h3">Embedding</h3>
+            <VectorStrip
+              vec={term.vec}
+              fullDim={payload.meta.embedding_dim}
+              displayDim={payload.meta.display_dim ?? term.vec.length}
+            />
+          </div>
+        )}
+
         <div className="neighbors">
-          <h3>Cosine similarity to nearest neighbors</h3>
+          <h3 className="panel-h3">Cosine similarity to nearest neighbours</h3>
           {neighbors.length === 0 ? (
-            <p className="empty">No neighbor data.</p>
+            <p className="empty">No neighbour data.</p>
           ) : (
             neighbors.map((n) => {
               const nt = payload.terms[n.idx];

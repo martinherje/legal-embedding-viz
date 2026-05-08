@@ -63,16 +63,9 @@ export default function Sidebar(props: Props) {
       </button>
 
       <header className="sidebar-header">
-        <h1>Embedding Atlas</h1>
+        <h1>Legal Embedding Atlas</h1>
         <div className="meta">
-          {load.status === "ready" ? (
-            <>
-              {load.payload.meta.count} terms · {load.payload.meta.embedding_dim}d ·{" "}
-              {load.payload.meta.model_name}
-            </>
-          ) : (
-            <>Where similarity in language sits in vector space.</>
-          )}
+          A vector-space view of legal vocabulary.
         </div>
       </header>
 
@@ -167,11 +160,13 @@ export default function Sidebar(props: Props) {
               </div>
             </div>
             <div className="section">
-              <h2>Tips</h2>
-              <p className="empty" style={{ paddingLeft: 0 }}>
-                Tap a point → see top-5 nearest neighbors with cosine similarity.
-                Try the term <code>intent</code> — criminal-law and contract-law senses
-                sit at different points if the model disambiguates them.
+              <h2>How to read it</h2>
+              <p className="empty" style={{ paddingLeft: 0, lineHeight: 1.55 }}>
+                Drag to rotate, pinch or scroll to zoom. Tap a point — its 5 nearest
+                neighbours light up with cosine values. The "Embedding" strip in the
+                term card shows the vector itself: 256 sampled dimensions of the full
+                vector, coloured by value. The 3D layout is the projection; the strip
+                is the source.
               </p>
             </div>
           </>

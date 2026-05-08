@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import Scatter2D from "./components/Scatter2D";
+import HUD from "./components/HUD";
+import Scatter3D from "./components/Scatter3D";
 import Sidebar from "./components/Sidebar";
 import type { Area, EmbeddingsPayload, Lang } from "./lib/types";
 
@@ -26,7 +27,6 @@ export default function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Auto-expand drawer when something is selected (phone)
   useEffect(() => {
     if (selectedIdx !== null) setDrawerExpanded(true);
   }, [selectedIdx]);
@@ -87,14 +87,22 @@ export default function App() {
     <div className="app">
       <div className="canvas-wrap">
         {load.status === "ready" ? (
-          <Scatter2D
-            payload={load.payload}
-            visibleIdx={visibleIdx}
-            selectedIdx={selectedIdx}
-            hoveredIdx={hoveredIdx}
-            onHover={setHoveredIdx}
-            onSelect={setSelectedIdx}
-          />
+          <>
+            <HUD
+              meta={load.payload.meta}
+              selected={selectedIdx !== null ? load.payload.terms[selectedIdx] : null}
+              hovered={hoveredIdx !== null ? load.payload.terms[hoveredIdx] : null}
+              onClear={() => setSelectedIdx(null)}
+            />
+            <Scatter3D
+              payload={load.payload}
+              visibleIdx={visibleIdx}
+              selectedIdx={selectedIdx}
+              hoveredIdx={hoveredIdx}
+              onHover={setHoveredIdx}
+              onSelect={setSelectedIdx}
+            />
+          </>
         ) : (
           <div className="banner">
             {load.status === "loading" && <p>Loading embeddings…</p>}
@@ -111,10 +119,6 @@ export default function App() {
                   <code>export GEMINI_API_KEY=…</code>
                   <br />
                   <code>python compute_embeddings.py</code>
-                </p>
-                <p style={{ marginTop: 8 }}>
-                  See <code>pipeline/README.md</code> for OpenAI / Voyage / local
-                  alternatives.
                 </p>
               </>
             )}

@@ -1,4 +1,4 @@
-export type Lang = "en" | "no" | "la";
+export type Lang = "en" | "la";
 
 export type Area =
   | "criminal"
@@ -7,12 +7,17 @@ export type Area =
   | "admin"
   | "constitutional"
   | "eu"
+  | "international"
   | "hr"
   | "procedure"
+  | "evidence"
   | "property"
+  | "corporate"
   | "tax"
   | "labour"
   | "family"
+  | "ip"
+  | "bankruptcy"
   | "theory";
 
 export interface Term {
@@ -23,6 +28,8 @@ export interface Term {
   short: string;
   pos2: [number, number];
   pos3: [number, number, number];
+  /** Down-sampled embedding for visual display (length DISPLAY_DIM, int8 quantized to [-1, 1]). */
+  vec: number[];
 }
 
 export interface Neighbor {
@@ -34,11 +41,11 @@ export interface EmbeddingsMeta {
   model_backend: string;
   model_name: string;
   embedding_dim: number;
+  display_dim?: number;
   bare_term: boolean;
   computed_at: string;
   count: number;
   umap: {
-    n_components: number;
     n_neighbors: number;
     min_dist: number;
     metric: string;

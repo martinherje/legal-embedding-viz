@@ -158,6 +158,27 @@ def topk_neighbors(embeddings: np.ndarray, k: int) -> list[list[dict]]:
     return out
 
 
+DISPLAY_DIM = 256
+
+
+def display_features(embeddings: np.ndarray, dim: int = DISPLAY_DIM) -> np.ndarray:
+    """Standardised [n_terms, dim] feature matrix in roughly [-1, 1].
+
+    Used by the frontend to render each term's vector as a coloured strip.
+    The point is *visual* communication of the high-dimensional source object —
+    we standardise per-dim across the corpus so most values sit in [-1, 1] and
+    the strip looks visually distinct per term."""
+    if embeddings.shape[1] <= dim:
+        v = embeddings.astype(np.float32)
+    else:
+        idx = np.linspace(0, embeddings.shape[1] - 1, dim).astype(int)
+        v = embeddings[:, idx].astype(np.float32)
+    mean = v.mean(axis=0, keepdims=True)
+    std = v.std(axis=0, keepdims=True) + 1e-8
+    v = (v - mean) / std / 2.5
+    return np.clip(v, -1, 1)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model", choices=list(BACKENDS), default="gemini")
@@ -193,11 +214,16 @@ def main() -> None:
     print(f"Computing top-{args.neighbors} neighbors...")
     neighbors = topk_neighbors(embeddings, args.neighbors)
 
+    print(f"Building display vectors (dim={DISPLAY_DIM})...")
+    display = display_features(embeddings)
+    display_int8 = np.round(display * 127).astype(int)
+
     out = {
         "meta": {
             "model_backend": args.model,
             "model_name": model_name,
             "embedding_dim": dim,
+            "display_dim": DISPLAY_DIM,
             "bare_term": args.bare_term,
             "umap": {"n_neighbors": 15, "min_dist": 0.12, "metric": "cosine"},
             "computed_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -212,6 +238,7 @@ def main() -> None:
                 "short": t["short"],
                 "pos2": [float(xy[i][0]), float(xy[i][1])],
                 "pos3": [float(xyz[i][0]), float(xyz[i][1]), float(xyz[i][2])],
+                "vec": display_int8[i].tolist(),
             }
             for i, t in enumerate(terms)
         ],
