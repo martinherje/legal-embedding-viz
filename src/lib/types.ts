@@ -21,7 +21,8 @@ export interface Term {
   lang: Lang;
   area: Area;
   short: string;
-  pos: [number, number, number];
+  pos2: [number, number];
+  pos3: [number, number, number];
 }
 
 export interface Neighbor {

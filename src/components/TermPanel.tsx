@@ -11,6 +11,10 @@ export default function TermPanel({ payload, idx, onSelect }: Props) {
   const term = payload.terms[idx];
   const neighbors = payload.neighbors[idx] ?? [];
   if (!term) return null;
+
+  // Use the strongest neighbor as the bar scale so bar widths read fairly.
+  const maxSim = neighbors.length > 0 ? Math.max(...neighbors.map((n) => n.sim), 0.001) : 1;
+
   return (
     <div className="section">
       <div
@@ -39,56 +43,48 @@ export default function TermPanel({ payload, idx, onSelect }: Props) {
         <div className="short">{term.short}</div>
 
         <div className="neighbors">
-          <h3>Nearest in vector space</h3>
+          <h3>Cosine similarity to nearest neighbors</h3>
           {neighbors.length === 0 ? (
             <p className="empty">No neighbor data.</p>
           ) : (
             neighbors.map((n) => {
               const nt = payload.terms[n.idx];
               if (!nt) return null;
+              const widthPct = (n.sim / maxSim) * 100;
               return (
                 <div
                   key={n.idx}
-                  className="neighbor-row"
+                  className="sim-row"
                   onClick={() => onSelect(n.idx)}
+                  role="button"
+                  tabIndex={0}
                 >
-                  <div className="nb-term">
+                  <div className="sim-name">
                     <span
                       className="dot"
                       style={{ background: AREA_COLOR[nt.area] }}
                     />
-                    <span className="nb-name">{nt.term}</span>
+                    <span>{nt.term}</span>
                   </div>
-                  <div className="nb-sim">{n.sim.toFixed(2)}</div>
+                  <div className="sim-track">
+                    <div
+                      className="sim-bar"
+                      style={{
+                        width: `${widthPct}%`,
+                        background: AREA_COLOR[nt.area],
+                      }}
+                    />
+                  </div>
+                  <div className="sim-value">{n.sim.toFixed(3)}</div>
                 </div>
               );
             })
           )}
         </div>
 
-        <div style={{ marginTop: 14, fontSize: 11, color: "var(--muted)" }}>
-          UMAP coords:{" "}
-          <span style={{ fontVariantNumeric: "tabular-nums" }}>
-            ({term.pos[0].toFixed(2)}, {term.pos[1].toFixed(2)},{" "}
-            {term.pos[2].toFixed(2)})
-          </span>
-          <br />
-          <button
-            onClick={() => onSelect(null)}
-            style={{
-              marginTop: 6,
-              background: "transparent",
-              border: "1px solid var(--border)",
-              borderRadius: 4,
-              padding: "2px 8px",
-              cursor: "pointer",
-              fontSize: 11,
-              color: "var(--muted)",
-            }}
-          >
-            Clear selection
-          </button>
-        </div>
+        <button onClick={() => onSelect(null)} className="clear-btn">
+          Clear selection (Esc)
+        </button>
       </div>
     </div>
   );

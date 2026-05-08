@@ -122,24 +122,24 @@ BACKENDS = {
 }
 
 
-def reduce_to_3d(embeddings: np.ndarray, seed: int) -> np.ndarray:
+def reduce_umap(embeddings: np.ndarray, n_components: int, seed: int) -> np.ndarray:
     import umap
 
     reducer = umap.UMAP(
-        n_components=3,
+        n_components=n_components,
         n_neighbors=min(15, max(2, len(embeddings) - 1)),
         min_dist=0.12,
         metric="cosine",
         random_state=seed,
     )
-    xyz = reducer.fit_transform(embeddings).astype(np.float32)
+    coords = reducer.fit_transform(embeddings).astype(np.float32)
 
     # Center and scale so the cloud sits in a unit-ish box for the viewer.
-    xyz -= xyz.mean(axis=0, keepdims=True)
-    radius = float(np.linalg.norm(xyz, axis=1).max())
+    coords -= coords.mean(axis=0, keepdims=True)
+    radius = float(np.linalg.norm(coords, axis=1).max())
     if radius > 0:
-        xyz /= radius
-    return xyz
+        coords /= radius
+    return coords
 
 
 def topk_neighbors(embeddings: np.ndarray, k: int) -> list[list[dict]]:
@@ -185,8 +185,10 @@ def main() -> None:
     dim = int(embeddings.shape[1])
     print(f"Embedded -> shape {embeddings.shape}")
 
+    print("Running UMAP -> 2D...")
+    xy = reduce_umap(embeddings, n_components=2, seed=args.seed)
     print("Running UMAP -> 3D...")
-    xyz = reduce_to_3d(embeddings, args.seed)
+    xyz = reduce_umap(embeddings, n_components=3, seed=args.seed)
 
     print(f"Computing top-{args.neighbors} neighbors...")
     neighbors = topk_neighbors(embeddings, args.neighbors)
@@ -197,7 +199,7 @@ def main() -> None:
             "model_name": model_name,
             "embedding_dim": dim,
             "bare_term": args.bare_term,
-            "umap": {"n_components": 3, "n_neighbors": 15, "min_dist": 0.12, "metric": "cosine"},
+            "umap": {"n_neighbors": 15, "min_dist": 0.12, "metric": "cosine"},
             "computed_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "count": len(terms),
         },
@@ -208,7 +210,8 @@ def main() -> None:
                 "lang": t["lang"],
                 "area": t["area"],
                 "short": t["short"],
-                "pos": [float(xyz[i][0]), float(xyz[i][1]), float(xyz[i][2])],
+                "pos2": [float(xy[i][0]), float(xy[i][1])],
+                "pos3": [float(xyz[i][0]), float(xyz[i][1]), float(xyz[i][2])],
             }
             for i, t in enumerate(terms)
         ],

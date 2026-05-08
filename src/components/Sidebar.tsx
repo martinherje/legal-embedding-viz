@@ -21,6 +21,8 @@ interface Props {
   toggleArea: (a: Area) => void;
   toggleLang: (l: Lang) => void;
   visibleIdx: Set<number>;
+  drawerExpanded: boolean;
+  setDrawerExpanded: (b: boolean) => void;
 }
 
 export default function Sidebar(props: Props) {
@@ -47,10 +49,21 @@ export default function Sidebar(props: Props) {
       .slice(0, 12);
   }, [load, query, visibleIdx]);
 
+  const drawerClass = `sidebar ${props.drawerExpanded ? "expanded" : "collapsed"}`;
+
   return (
-    <aside className="sidebar">
+    <aside className={drawerClass}>
+      <button
+        className="drawer-handle"
+        onClick={() => props.setDrawerExpanded(!props.drawerExpanded)}
+        aria-label={props.drawerExpanded ? "Collapse panel" : "Expand panel"}
+      >
+        <span className="drawer-grip" />
+        {props.drawerExpanded ? "Hide" : selectedIdx !== null ? "Show details" : "Filters"}
+      </button>
+
       <header className="sidebar-header">
-        <h1>Legal Embedding Atlas</h1>
+        <h1>Embedding Atlas</h1>
         <div className="meta">
           {load.status === "ready" ? (
             <>
@@ -58,7 +71,7 @@ export default function Sidebar(props: Props) {
               {load.payload.meta.model_name}
             </>
           ) : (
-            <>Where similarity in legal language sits in vector space.</>
+            <>Where similarity in language sits in vector space.</>
           )}
         </div>
       </header>
@@ -111,50 +124,54 @@ export default function Sidebar(props: Props) {
 
         {load.status === "ready" && selectedIdx === null && !query.trim() ? (
           <div className="empty" style={{ marginBottom: 16 }}>
-            Click a point or pick a term from filters below. Drag to rotate · scroll to
-            zoom.
+            Tap a point on the map. Or search above to find a term.
           </div>
         ) : null}
 
         {load.status === "ready" && (
           <>
             <div className="section">
-              <h2>Area of law</h2>
-              {(Object.keys(AREA_LABEL) as Area[]).map((a) => (
-                <div
-                  key={a}
-                  className={`legend-item ${props.disabledAreas.has(a) ? "disabled" : ""}`}
-                  onClick={() => props.toggleArea(a)}
-                >
-                  <span className="legend-swatch" style={{ background: AREA_COLOR[a] }} />
-                  <span>{AREA_LABEL[a]}</span>
-                  <span className="legend-count">{counts.areas[a] ?? 0}</span>
-                </div>
-              ))}
+              <h2>Area</h2>
+              <div className="chip-row">
+                {(Object.keys(AREA_LABEL) as Area[]).map((a) => (
+                  <button
+                    key={a}
+                    className={`chip ${props.disabledAreas.has(a) ? "off" : ""}`}
+                    onClick={() => props.toggleArea(a)}
+                    style={{
+                      borderColor: props.disabledAreas.has(a)
+                        ? "var(--border)"
+                        : AREA_COLOR[a],
+                    }}
+                  >
+                    <span className="dot" style={{ background: AREA_COLOR[a] }} />
+                    {AREA_LABEL[a]}
+                    <span className="chip-count">{counts.areas[a] ?? 0}</span>
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="section">
               <h2>Language</h2>
-              {(Object.keys(LANG_LABEL) as Lang[]).map((l) => (
-                <div
-                  key={l}
-                  className={`lang-item ${props.disabledLangs.has(l) ? "disabled" : ""}`}
-                  onClick={() => props.toggleLang(l)}
-                >
-                  <span>{LANG_LABEL[l]}</span>
-                  <span className="legend-count">{counts.langs[l] ?? 0}</span>
-                </div>
-              ))}
+              <div className="chip-row">
+                {(Object.keys(LANG_LABEL) as Lang[]).map((l) => (
+                  <button
+                    key={l}
+                    className={`chip ${props.disabledLangs.has(l) ? "off" : ""}`}
+                    onClick={() => props.toggleLang(l)}
+                  >
+                    {LANG_LABEL[l]}
+                    <span className="chip-count">{counts.langs[l] ?? 0}</span>
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="section">
               <h2>Tips</h2>
               <p className="empty" style={{ paddingLeft: 0 }}>
-                <span className="kbd">click</span> a point to inspect its neighbors.
-                <br />
-                <span className="kbd">esc</span> · click empty space to clear selection.
-                <br />
-                Try the term <code style={{ color: "var(--text)" }}>intent</code> —
-                criminal-law and contract-law senses sit at different points if the
-                model disambiguates them.
+                Tap a point → see top-5 nearest neighbors with cosine similarity.
+                Try the term <code>intent</code> — criminal-law and contract-law senses
+                sit at different points if the model disambiguates them.
               </p>
             </div>
           </>

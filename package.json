@@ -1,8 +1,8 @@
 {
   "name": "legal-embedding-viz",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "Interactive 3D visualization of legal-term embeddings (English + Norwegian) using current SOTA embedding models.",
+  "description": "Interactive 2D visualization of legal-term embeddings (English + Norwegian + Latin) using current SOTA embedding models.",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,16 +11,12 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@react-three/drei": "^9.114.0",
-    "@react-three/fiber": "^8.17.10",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "three": "^0.169.0"
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
-    "@types/three": "^0.169.0",
     "@vitejs/plugin-react": "^4.3.3",
     "typescript": "^5.6.3",
     "vite": "^5.4.10"

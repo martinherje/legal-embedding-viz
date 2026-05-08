@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import Scatter3D from "./components/Scatter3D";
+import Scatter2D from "./components/Scatter2D";
 import Sidebar from "./components/Sidebar";
 import type { Area, EmbeddingsPayload, Lang } from "./lib/types";
 
@@ -16,6 +16,7 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [disabledAreas, setDisabledAreas] = useState<Set<Area>>(new Set());
   const [disabledLangs, setDisabledLangs] = useState<Set<Lang>>(new Set());
+  const [drawerExpanded, setDrawerExpanded] = useState(false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -24,6 +25,11 @@ export default function App() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
+
+  // Auto-expand drawer when something is selected (phone)
+  useEffect(() => {
+    if (selectedIdx !== null) setDrawerExpanded(true);
+  }, [selectedIdx]);
 
   useEffect(() => {
     fetch(`${import.meta.env.BASE_URL}data/embeddings.json`)
@@ -81,7 +87,7 @@ export default function App() {
     <div className="app">
       <div className="canvas-wrap">
         {load.status === "ready" ? (
-          <Scatter3D
+          <Scatter2D
             payload={load.payload}
             visibleIdx={visibleIdx}
             selectedIdx={selectedIdx}
@@ -133,6 +139,8 @@ export default function App() {
         toggleArea={toggleArea}
         toggleLang={toggleLang}
         visibleIdx={visibleIdx}
+        drawerExpanded={drawerExpanded}
+        setDrawerExpanded={setDrawerExpanded}
       />
     </div>
   );
