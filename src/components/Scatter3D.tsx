@@ -60,10 +60,23 @@ function Scene({
   }, [gl]);
 
   const baseColors = useMemo(() => {
+    // Combine the area's hue with the term's local-cluster density. High density
+    // (sits in a tight cluster) → vivid, fully-saturated colour. Low density
+    // (isolated point) → desaturated and slightly darker. The density signal
+    // works as an extra visual dimension on top of the spatial layout.
     const arr = new Float32Array(payload.terms.length * 3);
     const c = new THREE.Color();
+    const hsl = { h: 0, s: 0, l: 0 };
     for (let i = 0; i < payload.terms.length; i++) {
-      c.set(AREA_COLOR[payload.terms[i].area] ?? "#888");
+      const t = payload.terms[i];
+      const d = typeof t.density === "number" ? t.density : 0.6;
+      c.set(AREA_COLOR[t.area] ?? "#888");
+      c.getHSL(hsl);
+      // d=1 → keep saturation; d=0 → drop to ~25% saturation (greyish)
+      const newS = hsl.s * (0.25 + 0.75 * d);
+      // d=1 → slight brightening; d=0 → mild dimming
+      const newL = hsl.l * (0.7 + 0.45 * d);
+      c.setHSL(hsl.h, Math.min(1, newS), Math.min(1, Math.max(0.05, newL)));
       arr[i * 3 + 0] = c.r;
       arr[i * 3 + 1] = c.g;
       arr[i * 3 + 2] = c.b;

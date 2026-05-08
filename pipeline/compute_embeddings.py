@@ -127,8 +127,8 @@ def reduce_umap(embeddings: np.ndarray, n_components: int, seed: int) -> np.ndar
 
     reducer = umap.UMAP(
         n_components=n_components,
-        n_neighbors=min(15, max(2, len(embeddings) - 1)),
-        min_dist=0.12,
+        n_neighbors=min(12, max(2, len(embeddings) - 1)),
+        min_dist=0.04,
         metric="cosine",
         random_state=seed,
     )
@@ -140,6 +140,22 @@ def reduce_umap(embeddings: np.ndarray, n_components: int, seed: int) -> np.ndar
     if radius > 0:
         coords /= radius
     return coords
+
+
+def density_signal(neighbors: list[list[dict]], k: int = 5) -> list[float]:
+    """Per-term density = mean cosine similarity to top-k neighbours,
+    normalized to [0, 1] across the corpus. High density = the term sits in
+    a tight cluster; low density = relatively isolated point. Used by the
+    frontend as an extra visual dimension on top of the area-of-law colour."""
+    raw = np.array(
+        [np.mean([n["sim"] for n in row[:k]]) if row else 0.0 for row in neighbors],
+        dtype=np.float32,
+    )
+    lo, hi = float(raw.min()), float(raw.max())
+    if hi - lo < 1e-9:
+        return [0.5] * len(raw)
+    norm = (raw - lo) / (hi - lo)
+    return [float(round(v, 4)) for v in norm]
 
 
 def topk_neighbors(embeddings: np.ndarray, k: int) -> list[list[dict]]:
@@ -214,6 +230,9 @@ def main() -> None:
     print(f"Computing top-{args.neighbors} neighbors...")
     neighbors = topk_neighbors(embeddings, args.neighbors)
 
+    print("Computing density signal...")
+    density = density_signal(neighbors, k=5)
+
     print(f"Building display vectors (dim={DISPLAY_DIM})...")
     display = display_features(embeddings)
     display_int8 = np.round(display * 127).astype(int)
@@ -225,7 +244,7 @@ def main() -> None:
             "embedding_dim": dim,
             "display_dim": DISPLAY_DIM,
             "bare_term": args.bare_term,
-            "umap": {"n_neighbors": 15, "min_dist": 0.12, "metric": "cosine"},
+            "umap": {"n_neighbors": 12, "min_dist": 0.04, "metric": "cosine"},
             "computed_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "count": len(terms),
         },
@@ -238,6 +257,7 @@ def main() -> None:
                 "short": t["short"],
                 "pos2": [float(xy[i][0]), float(xy[i][1])],
                 "pos3": [float(xyz[i][0]), float(xyz[i][1]), float(xyz[i][2])],
+                "density": density[i],
                 "vec": display_int8[i].tolist(),
             }
             for i, t in enumerate(terms)

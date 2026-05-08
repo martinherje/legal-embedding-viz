@@ -28,6 +28,8 @@ export interface Term {
   short: string;
   pos2: [number, number];
   pos3: [number, number, number];
+  /** Local cluster density [0, 1]: 1 = sits in a tight cluster, 0 = isolated. */
+  density: number;
   /** Down-sampled embedding for visual display (length DISPLAY_DIM, int8 quantized to [-1, 1]). */
   vec: number[];
 }
