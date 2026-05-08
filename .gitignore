@@ -11,6 +11,5 @@ __pycache__/
 .venv/
 .uv-cache/
 
-# Generated artefacts
-public/data/embeddings.json
+# Generated artefacts (ignored locally; CI generates fresh on each deploy)
 data/embeddings.cache.json

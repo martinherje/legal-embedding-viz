@@ -1,0 +1,84 @@
+name: Build and deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+
+      - name: Cache HuggingFace models
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-multilingual-e5-small-v1
+
+      - name: Install pipeline dependencies
+        run: |
+          # Install the slim subset needed for this run; skip torch GPU wheels
+          pip install --upgrade pip
+          if [ -n "${{ secrets.GEMINI_API_KEY }}" ]; then
+            pip install numpy umap-learn google-genai tqdm
+          else
+            # CPU-only torch keeps the wheel small (~200MB instead of ~2GB)
+            pip install --extra-index-url https://download.pytorch.org/whl/cpu \
+              numpy umap-learn sentence-transformers tqdm
+          fi
+
+      - name: Compute embeddings
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          if [ -n "$GEMINI_API_KEY" ]; then
+            echo "Using Gemini Embedding 001"
+            python pipeline/compute_embeddings.py --model gemini
+          else
+            echo "No GEMINI_API_KEY secret — falling back to multilingual-e5-small"
+            python pipeline/compute_embeddings.py --model local
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm install --no-audit --no-fund
+
+      - name: Build
+        env:
+          VITE_BASE: /legal-embedding-viz/
+        run: npm run build
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

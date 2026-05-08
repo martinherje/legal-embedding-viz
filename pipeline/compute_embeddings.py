@@ -98,18 +98,27 @@ def embed_voyage(texts: list[str], model: str) -> np.ndarray:
 
 
 def embed_local(texts: list[str], model: str) -> np.ndarray:
-    """Offline fallback. Default model BAAI/bge-m3 is strong on multilingual."""
+    """Offline fallback. sentence-transformers with a multilingual model.
+
+    Default `intfloat/multilingual-e5-small` is ~470MB and quite good on
+    multilingual semantic similarity — strong CI/Pages-friendly default.
+    Override with --model-name to use a heavier model (e.g. BAAI/bge-m3)."""
     from sentence_transformers import SentenceTransformer
 
     st = SentenceTransformer(model)
-    return np.asarray(st.encode(texts, normalize_embeddings=False), dtype=np.float32)
+    # multilingual-e5-* expects "passage: " prefix for documents
+    if "e5" in model.lower():
+        prefixed = [f"passage: {t}" for t in texts]
+    else:
+        prefixed = texts
+    return np.asarray(st.encode(prefixed, normalize_embeddings=False), dtype=np.float32)
 
 
 BACKENDS = {
     "gemini": ("gemini-embedding-001", embed_gemini),
     "openai": ("text-embedding-3-large", embed_openai),
     "voyage": ("voyage-3-large", embed_voyage),
-    "local": ("BAAI/bge-m3", embed_local),
+    "local": ("intfloat/multilingual-e5-small", embed_local),
 }
 
 
