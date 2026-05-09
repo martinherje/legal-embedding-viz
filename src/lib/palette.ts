@@ -1,24 +1,24 @@
 import type { Area, Lang } from "./types";
 
 export const AREA_COLOR: Record<Area, string> = {
-  criminal: "#e63946",
-  procedure: "#9d4edd",
-  evidence: "#7c4dff",
-  contract: "#f4a261",
-  tort: "#e76f51",
-  property: "#b5838d",
-  corporate: "#c77dff",
-  admin: "#2a9d8f",
-  constitutional: "#264653",
-  eu: "#4361ee",
-  international: "#3a86ff",
-  hr: "#06aed5",
-  tax: "#ffba08",
-  labour: "#80b918",
-  family: "#ff6b9d",
-  ip: "#ff9e00",
-  bankruptcy: "#a07c5b",
-  theory: "#9aa0aa",
+  criminal: "#ff5a6e",          // bright red
+  procedure: "#b97afe",          // violet
+  evidence: "#7e88ff",           // indigo
+  contract: "#ffb066",            // warm orange
+  tort: "#ff8c6b",               // coral
+  property: "#d49aa3",            // dusty rose
+  corporate: "#e58cff",           // pink-purple
+  admin: "#3ed1bb",               // bright teal
+  constitutional: "#5fb3e8",      // sky blue
+  eu: "#6c8cff",                  // periwinkle
+  international: "#5db3ff",       // azure
+  hr: "#3fdcff",                  // cyan
+  tax: "#ffd14d",                 // amber
+  labour: "#9ed94a",              // lime
+  family: "#ff8ab1",              // pink
+  ip: "#ffb340",                  // gold
+  bankruptcy: "#d4af8b",          // tan
+  theory: "#b8b8e8",              // lavender
 };
 
 export const AREA_LABEL: Record<Area, string> = {

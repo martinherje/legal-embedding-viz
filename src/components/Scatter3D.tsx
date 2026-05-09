@@ -60,23 +60,25 @@ function Scene({
   }, [gl]);
 
   const baseColors = useMemo(() => {
-    // Combine the area's hue with the term's local-cluster density. High density
-    // (sits in a tight cluster) → vivid, fully-saturated colour. Low density
-    // (isolated point) → desaturated and slightly darker. The density signal
-    // works as an extra visual dimension on top of the spatial layout.
+    // Hue from area; density modulates saturation and lightness inside a
+    // visible range so every point reads against the dark background.
+    // Cluster members glow more vividly; isolated points are slightly softer
+    // but still clearly the area's colour.
     const arr = new Float32Array(payload.terms.length * 3);
     const c = new THREE.Color();
     const hsl = { h: 0, s: 0, l: 0 };
+    const MIN_L = 0.56;
+    const MAX_L = 0.74;
     for (let i = 0; i < payload.terms.length; i++) {
       const t = payload.terms[i];
       const d = typeof t.density === "number" ? t.density : 0.6;
       c.set(AREA_COLOR[t.area] ?? "#888");
       c.getHSL(hsl);
-      // d=1 → keep saturation; d=0 → drop to ~25% saturation (greyish)
-      const newS = hsl.s * (0.25 + 0.75 * d);
-      // d=1 → slight brightening; d=0 → mild dimming
-      const newL = hsl.l * (0.7 + 0.45 * d);
-      c.setHSL(hsl.h, Math.min(1, newS), Math.min(1, Math.max(0.05, newL)));
+      // Density nudges saturation in [0.6, 1.0] of the source saturation
+      const newS = hsl.s * (0.6 + 0.4 * d);
+      // Lightness mapped into the visible band; high-density slightly brighter
+      const newL = MIN_L + (MAX_L - MIN_L) * d;
+      c.setHSL(hsl.h, Math.min(1, newS), newL);
       arr[i * 3 + 0] = c.r;
       arr[i * 3 + 1] = c.g;
       arr[i * 3 + 2] = c.b;
@@ -142,12 +144,12 @@ function Scene({
       const g = baseColors[i * 3 + 1];
       const b = baseColors[i * 3 + 2];
       if (!visible) {
-        tmp.setRGB(r * 0.18, g * 0.18, b * 0.18);
+        tmp.setRGB(r * 0.22, g * 0.22, b * 0.22);
       } else if (selectedIdx === i || neighborSet.has(i)) {
-        tmp.setRGB(Math.min(1, r * 1.3), Math.min(1, g * 1.3), Math.min(1, b * 1.3));
+        tmp.setRGB(Math.min(1, r * 1.25), Math.min(1, g * 1.25), Math.min(1, b * 1.25));
       } else if (selectedIdx !== null) {
-        // Dim non-neighbors when something is selected
-        tmp.setRGB(r * 0.5, g * 0.5, b * 0.5);
+        // Dim non-neighbours but keep them visible
+        tmp.setRGB(r * 0.7, g * 0.7, b * 0.7);
       } else {
         tmp.setRGB(r, g, b);
       }
