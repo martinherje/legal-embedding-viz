@@ -135,7 +135,10 @@ function Scene({
   // Update instance colors.
   useEffect(() => {
     const mesh = meshRef.current;
-    if (!mesh || !mesh.instanceColor) return;
+    if (!mesh) return;
+    // Note: mesh.instanceColor is null until setColorAt is called for the
+    // first time. Calling setColorAt initializes the buffer; only then can we
+    // mark it dirty.
     const tmp = new THREE.Color();
     const neighborSet = new Set(edges?.map((e) => e.idx) ?? []);
     for (let i = 0; i < payload.terms.length; i++) {
@@ -155,7 +158,9 @@ function Scene({
       }
       mesh.setColorAt(i, tmp);
     }
-    mesh.instanceColor.needsUpdate = true;
+    if (mesh.instanceColor) {
+      mesh.instanceColor.needsUpdate = true;
+    }
   }, [payload, visibleIdx, selectedIdx, edges, baseColors]);
 
   // Slow auto-rotation when nothing selected — adds to the "alive" feel.
@@ -191,8 +196,9 @@ function Scene({
         <sphereGeometry args={[1, 14, 14]} />
         {/* MeshBasicMaterial renders the per-instance colour exactly as set —
             no light-side / shadow-side darkening. Right tradeoff for data
-            markers against a dark background. */}
-        <meshBasicMaterial vertexColors />
+            markers against a dark background. Instance colours are picked up
+            automatically when mesh.instanceColor is populated; no flag needed. */}
+        <meshBasicMaterial />
       </instancedMesh>
 
       {/* Edges to selected term's nearest neighbors */}
