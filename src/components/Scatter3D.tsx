@@ -102,10 +102,10 @@ function Scene({
   useEffect(() => {
     const mesh = meshRef.current;
     if (!mesh) return;
-    const baseScale = 0.025;
-    const selScale = 0.05;
-    const hovScale = 0.04;
-    const neighborScale = 0.04;
+    const baseScale = 0.035;
+    const selScale = 0.065;
+    const hovScale = 0.05;
+    const neighborScale = 0.05;
     const neighborSet = new Set(edges?.map((e) => e.idx) ?? []);
 
     for (let i = 0; i < payload.terms.length; i++) {
@@ -188,8 +188,11 @@ function Scene({
           onSelect(idx);
         }}
       >
-        <sphereGeometry args={[1, 16, 16]} />
-        <meshStandardMaterial vertexColors metalness={0.05} roughness={0.55} />
+        <sphereGeometry args={[1, 14, 14]} />
+        {/* MeshBasicMaterial renders the per-instance colour exactly as set —
+            no light-side / shadow-side darkening. Right tradeoff for data
+            markers against a dark background. */}
+        <meshBasicMaterial vertexColors />
       </instancedMesh>
 
       {/* Edges to selected term's nearest neighbors */}
